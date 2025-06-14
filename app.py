@@ -57,6 +57,10 @@ if imagenes_subidas:
     for imagen in imagenes_subidas:
         img_bytes = imagen.read()
         texto = ocr_space_api(img_bytes)
+        
+        # Mostrar el texto OCR crudo para debug
+        st.text_area("Texto OCR detectado:", texto, height=200)
+        
         datos = procesar_texto(texto)
         todos_los_datos.extend(datos)
 
