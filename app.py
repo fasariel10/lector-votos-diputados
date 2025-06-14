@@ -1,6 +1,5 @@
 import streamlit as st
-import pytesseract
-import cv2
+import requests
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -10,9 +9,21 @@ st.set_page_config(page_title="Lectura de Votos - Diputados", layout="wide")
 st.title("📥 Extractor de Votos para Diputados por Imagen")
 st.markdown("Subí una imagen de la planilla electoral para extraer el número de mesa y los votos de diputados.")
 
-def procesar_imagen(img):
-    imagen_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    texto = pytesseract.image_to_string(imagen_cv, config='--psm 6')
+API_KEY = 'K85174237188957'
+
+def ocr_space_api(imagen_bytes):
+    response = requests.post(
+        'https://api.ocr.space/parse/image',
+        files={'filename': ('image.jpg', imagen_bytes)},
+        data={'apikey': API_KEY, 'language': 'spa'}
+    )
+    result = response.json()
+    if result.get('IsErroredOnProcessing'):
+        return ""
+    else:
+        return result['ParsedResults'][0]['ParsedText']
+
+def procesar_texto(texto):
     lineas = texto.splitlines()
 
     resultados = []
@@ -44,8 +55,9 @@ imagenes_subidas = st.file_uploader("📸 Subí una o más imágenes", type=["jp
 if imagenes_subidas:
     todos_los_datos = []
     for imagen in imagenes_subidas:
-        img = Image.open(imagen)
-        datos = procesar_imagen(img)
+        img_bytes = imagen.read()
+        texto = ocr_space_api(img_bytes)
+        datos = procesar_texto(texto)
         todos_los_datos.extend(datos)
 
     if todos_los_datos:
