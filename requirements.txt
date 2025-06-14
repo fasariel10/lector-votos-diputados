@@ -1,8 +1,6 @@
 streamlit
-pytesseract
-opencv-python
-numpy
+requests
 pandas
+numpy
 Pillow
 xlsxwriter
-
