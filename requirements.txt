@@ -1,6 +1,8 @@
 streamlit
 pytesseract
 opencv-python
+numpy
 pandas
 Pillow
-opencv-python
+xlsxwriter
+
