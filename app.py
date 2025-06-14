@@ -39,7 +39,7 @@ def procesar_texto(texto):
                     mesa = p
 
         # Buscar líneas con votos para diputados
-        if "Diputado" in linea or "Diputada" in linea or "Diputados" in linea:
+        if "Diputado/a" in linea or "Diputada" in linea or "Diputados" in linea:
             partes = linea.split()
             nombre_lista = " ".join(partes[:-1])
             try:
