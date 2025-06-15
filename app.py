@@ -25,32 +25,64 @@ def ocr_space_api(imagen_bytes):
 
 def procesar_texto(texto):
     lineas = texto.splitlines()
-    resultados = []
     mesa = ""
-    
+    resultados = []
+
+    partidos = {
+        "900 B MEJOR CIUDAD": "",
+        "900 D ENCONTRARNOS RENOVADOS": "",
+        "900 E CIUDAD SUSTENTABLE": "",
+        "900 F LIBRES EN UNIÓN Y ORDEN": "",
+        "900 G ENCUENTRO POR MI CIUDAD": "",
+        "900 H RENOVANDO CON LA GENTE": "",
+        "900 I LA CIUDAD QUE QUIERO": "",
+        "900 J COMPROMISO RENOVADO": "",
+        "900 K LA SALUD PRIMERO": "",
+        "900 L TU VOZ, MI COMPROMISO": "",
+        "900 M COMPROMISO CON VOS": "",
+        "900 N PODES": "",
+        "900 O POSDATA": "",
+        "900 Q HACEMOS FUTURO": "",
+        "900 S FUERZA LIBERAL": "",
+        "900 X LA CIUDAD MÁS LINDA": "",
+        "901-CONFLUENCIA POPULAR POR LA PATRIA": "",
+        "901 ZAB COMPROMISO Y HONESTIDAD CON LA GENTE": "",
+        "901 ZT DIGNIDAD Y TRABAJO": "",
+        "901 ZG LA VOZ DEL BARRIO": "",
+        "901 ZN CIUDAD HUMANA": "",
+        "901 ZR UNIÓN POR LA PATRIA": "",
+        "901 ZZ PARA RECUPERAR DERECHOS": "",
+        "902-FRENTE UNIDOS POR EL FUTURO": "",
+        "902 WF FUTURO": "",
+        "902 ZM TE QUIERO CON FUTURO": "",
+        "902 ZN UNIDOS POR NUESTRA CIUDAD": "",
+        "902 ZS UNIDOS POR EL FUTURO": "",
+        "902 ZT MARCANDO HUELLAS": "",
+        "902 ZW PUEDE +": ""
+    }
+
+    # Buscar número de mesa
     for linea in lineas:
-        linea = linea.strip()
-        if not linea:
-            continue
-        
-        # Buscar número de mesa
         if "mesa" in linea.lower():
             partes = linea.split()
             for p in partes:
                 if p.isdigit():
                     mesa = p
 
-        # Buscar líneas con sublemas o votos
-        elif any(x in linea.lower() for x in ["diputado", "sublema", "lista"]) and any(char.isdigit() for char in linea):
-            partes = linea.rsplit(" ", 1)
-            if len(partes) == 2 and partes[1].isdigit():
-                nombre_lista = partes[0].strip().upper()
-                votos = int(partes[1])
-                resultados.append({
-                    "Mesa": mesa,
-                    "Lista": nombre_lista,
-                    "Votos Diputados": votos
-                })
+    # Buscar filas con números manuscritos (suelen estar al final de la línea)
+    for linea in lineas:
+        partes = linea.rsplit(" ", 1)
+        if len(partes) == 2 and partes[1].strip().isdigit():
+            nombre_lista = partes[0].strip().upper()
+            votos = int(partes[1].strip())
+
+            for clave in partidos.keys():
+                if clave in nombre_lista:
+                    resultados.append({
+                        "Mesa": mesa,
+                        "Lista": clave,
+                        "Votos Diputados": votos
+                    })
 
     return resultados
 
@@ -62,9 +94,8 @@ if imagenes_subidas:
         img_bytes = imagen.read()
         texto = ocr_space_api(img_bytes)
         
-        # Mostrar texto detectado para debug
         st.text_area("📄 Texto OCR detectado:", texto, height=200)
-        
+
         datos = procesar_texto(texto)
         todos_los_datos.extend(datos)
 
@@ -73,12 +104,10 @@ if imagenes_subidas:
         st.success("✅ Datos extraídos correctamente:")
         st.dataframe(df, use_container_width=True)
 
-        # Mostrar totales por lista/sublema
         st.subheader("📊 Totales por Lista/Sublema")
         totales = df.groupby("Lista", as_index=False)["Votos Diputados"].sum()
         st.dataframe(totales, use_container_width=True)
 
-        # Descargar Excel
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Votos Diputados')
@@ -86,4 +115,3 @@ if imagenes_subidas:
         st.download_button("📥 Descargar Excel", data=output.getvalue(), file_name="votos_diputados.xlsx")
     else:
         st.warning("⚠️ No se encontraron datos válidos en las imágenes.")
-
