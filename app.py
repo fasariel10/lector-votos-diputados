@@ -1,27 +1,13 @@
 import streamlit as st
-import requests
 import numpy as np
 import pandas as pd
 from PIL import Image
+import pytesseract
 import io
 
 st.set_page_config(page_title="Lectura de Votos - Diputados", layout="wide")
 st.title("📥 Extractor de Votos para Diputados por Imagen")
 st.markdown("Subí una imagen de la planilla electoral para extraer el número de mesa y los votos de diputados.")
-
-API_KEY = 'K85174237188957'  # Tu clave de OCR.space
-
-def ocr_space_api(imagen_bytes):
-    response = requests.post(
-        'https://api.ocr.space/parse/image',
-        files={'filename': ('image.jpg', imagen_bytes)},
-        data={'apikey': API_KEY, 'language': 'spa'}
-    )
-    result = response.json()
-    if result.get('IsErroredOnProcessing'):
-        return ""
-    else:
-        return result['ParsedResults'][0]['ParsedText']
 
 def procesar_texto(texto):
     lineas = texto.splitlines()
@@ -61,7 +47,6 @@ def procesar_texto(texto):
         "902 ZW PUEDE +": ""
     }
 
-    # Buscar número de mesa
     for linea in lineas:
         if "mesa" in linea.lower():
             partes = linea.split()
@@ -69,7 +54,6 @@ def procesar_texto(texto):
                 if p.isdigit():
                     mesa = p
 
-    # Buscar filas con números manuscritos (suelen estar al final de la línea)
     for linea in lineas:
         partes = linea.rsplit(" ", 1)
         if len(partes) == 2 and partes[1].strip().isdigit():
@@ -91,9 +75,9 @@ imagenes_subidas = st.file_uploader("📸 Subí una o más imágenes", type=["jp
 if imagenes_subidas:
     todos_los_datos = []
     for imagen in imagenes_subidas:
-        img_bytes = imagen.read()
-        texto = ocr_space_api(img_bytes)
-        
+        img = Image.open(imagen)
+        texto = pytesseract.image_to_string(img, lang="eng")  # Usamos eng para evitar errores
+
         st.text_area("📄 Texto OCR detectado:", texto, height=200)
 
         datos = procesar_texto(texto)
